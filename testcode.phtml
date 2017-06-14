@@ -1,0 +1,123 @@
+<?php
+ $con = mysqli_connect('localhost','chart','password','test1') or die("error");
+ $output = '';
+
+if(isset($_POST['search'])){
+  $searchq = $_POST['search'];
+  $query = "SELECT * FROM temp WHERE Date LIKE '$searchq' ";
+  $response = mysqli_query($con, $query) or die("error");
+  $count = mysqli_num_rows($response);
+  
+  if($count == 0){
+    $output = "No Results";
+  } else{
+      while($row = mysqli_fetch_array($response)) {
+        $temp = $row['temperature'];
+
+        $output = '<h3>'.$temp.'&degC'.'</h3>';
+      }
+  }
+  
+}
+
+
+?>
+
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Date', 'Temperature'],
+	  <?php
+
+	  $sortquery = "SELECT * FROM temp ORDER BY Date DESC";	
+	  //$query = "SELECT * FROM temp";
+	   $result = mysqli_query($con, $sortquery);
+	  $i = 0;
+	
+	while($row = mysqli_fetch_array($result))
+	  {
+
+	   if($i == 4)
+		break;
+
+	   else
+	    echo "['" . $row['Date'] . "'," . $row['temperature'] . "],";
+
+	   $i++;
+
+	  }
+
+          ?>
+	]);
+
+        var options = {
+          title: 'Live Temperature Stream',
+          hAxis: {title: 'Date/time',  titleTextStyle: {color: '#323'}},
+          vAxis: {title: 'Degrees in Celcius', minValue: 0}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
+	<link rel="stylesheet" type="text/css" href="testcode.css">
+
+
+</head>
+
+
+
+
+<body>
+
+<ul>
+  <li><a href="#home">Home</a></li>
+  <li><a href="#news">Sensor</a></li>
+  <li class="dropdown">
+    <a href="javascript:void(0)" class="dropbtn">Dropdown</a>
+    <div class="dropdown-content">
+     <!-- <a href="#">Link 1</a>
+      <a href="#">Link 2</a>
+      <a href="#">Link 3</a> -->
+    </div>
+  </li>
+</ul>
+
+
+
+
+ <form action="testcode.phtml" method="post">
+        <input type="text" name="search" placeholder="Search Time Frame" />
+        <input type="submit" value="search" href="#" class="myButton" />
+    </form>
+   
+<?php print("$output");?>
+
+
+
+
+<h1>Current Temperature:</h1>
+
+	<?php
+	$sortquery = "SELECT * FROM temp ORDER BY Date DESC";
+	$result = mysqli_query($con, $sortquery);
+	$row = mysqli_fetch_array($result);
+	echo "<h2>" . $row['temperature'] . "&degC" ."&nbsp"."(". (($row['temperature'] * 1.8) + 32) ."&degF" . ")" . "</h2>";
+	?>
+    
+
+<div id="chart_div" style="width: 99%; height: 500px;" ></div>
+
+</body>
+</html>
+
+<?php
+mysqli_close($con);
+?>
+
